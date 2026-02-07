@@ -3,7 +3,7 @@ src/
 ├── App.jsx
 │
 │
-├── pages/
+├── Pages/
 │   ├── auth/
 │   │   ├── Login.jsx
 │   │   └── Signup.jsx
@@ -36,7 +36,7 @@ src/
 │   ├── Modal.jsx
 │   └── Loader.jsx
 │
-├── services/
+├── Services/
 │   ├── api.js
 │   ├── auth.js
 │   ├── job.js
