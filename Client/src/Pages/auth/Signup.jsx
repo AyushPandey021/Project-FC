@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import api from "../../Services/api";
+import api from "../../services/api";
 import { useAuth } from "../../hooks/useAuth";
 
 const Signup = () => {
@@ -20,28 +20,19 @@ const Signup = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const res = await api.post("/auth/signup", form);
-      const { user } = res.data;
+  const res = await api.post("/auth/signup", form);
 
-      // 🔥 AUTO LOGIN
-      login(user);
+  // 🔴 MUST SAVE TOKEN
+  localStorage.setItem("token", res.data.token);
 
-      // 🔁 ROLE BASED REDIRECT
-      if (user.role === "finder") navigate("/finder/dashboard");
-      if (user.role === "cleaner") navigate("/cleaner/dashboard");
-      if (user.role === "admin") navigate("/admin/dashboard");
-    } catch (err) {
-      console.error(err);
-      alert("Signup failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  login(res.data.user);
+
+  navigate("/complete-profile");
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">

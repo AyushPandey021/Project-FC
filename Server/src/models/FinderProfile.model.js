@@ -1,11 +1,10 @@
 import mongoose from "mongoose";
 
-export default mongoose.model(
-  "FinderProfile",
-  new mongoose.Schema({
-    userId: mongoose.Schema.Types.ObjectId,
-    phone: String,
-    location: String,
-    placeType: String
-  })
-);
+const finderProfileSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  phone: String,
+  location: String,
+  placeType: String,
+});
+
+export default mongoose.model("FinderProfile", finderProfileSchema);

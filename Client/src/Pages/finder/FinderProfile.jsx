@@ -1,121 +1,116 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getMyProfile, completeProfile } from "../../services/profile";
 
 const FinderProfile = () => {
-  const [form, setForm] = useState({
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "",
-    location: "",
-    placeType: "",
-  });
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState({});
+  const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    getMyProfile().then((res) => {
+      setUser(res.data.user);
+      setProfile(res.data.profile || {});
+    });
+  }, []);
+
+  if (!user) return null;
+
+  const requiredFields = ["phone", "location", "placeType"];
+  const filled = requiredFields.filter((f) => profile?.[f]).length;
+  const progress = Math.round((filled / requiredFields.length) * 100);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Updated profile:", form);
-    alert("Profile updated successfully ✅");
+    await completeProfile(profile);
+    setShowForm(false);
+    alert("✅ Profile completed successfully");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-200 p-6">
-      
-      {/* Header */}
-      <div className="mb-8 animate-fade-in">
-        <h2 className="text-3xl font-bold text-gray-800">
-          My Profile
-        </h2>
-        <p className="text-gray-500 mt-1">
-          Manage your personal details
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-2xl bg-white rounded-xl p-6 shadow">
+
+        {/* BASIC INFO */}
+        <h2 className="text-2xl font-bold mb-1">{user.name}</h2>
+        <p className="text-gray-500">{user.email}</p>
+        <p className="text-sm text-gray-500 mb-4">
+          Role: {user.role}
         </p>
+
+        {/* PROGRESS */}
+        <div className="mb-4">
+          <div className="flex justify-between text-sm">
+            <span>Profile Progress</span>
+            <span>{user.profileCompleted ? "100%" : `${progress}%`}</span>
+          </div>
+          <div className="h-2 bg-gray-200 rounded">
+            <div
+              className={`h-2 rounded transition-all ${
+                user.profileCompleted ? "bg-green-500" : "bg-blue-500"
+              }`}
+              style={{ width: user.profileCompleted ? "100%" : `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* STATUS */}
+        {user.profileCompleted ? (
+          <p className="text-green-600 font-semibold">
+            ✔ Profile Completed
+          </p>
+        ) : (
+          <button
+            onClick={() => setShowForm(true)}
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Complete Your Profile
+          </button>
+        )}
       </div>
 
-      {/* Profile Card */}
-      <div className="max-w-2xl bg-white rounded-2xl shadow-xl p-8">
+      {/* FORM */}
+      {showForm && (
+        <div className="max-w-2xl bg-white rounded-xl p-6 shadow mt-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Full Name
-            </label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Email (readonly) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Email
-            </label>
-            <input
-              value={form.email}
-              disabled
-              className="w-full px-4 py-3 border rounded-xl bg-gray-100 cursor-not-allowed"
-            />
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Phone Number
-            </label>
             <input
               name="phone"
-              placeholder="Enter phone number"
+              placeholder="Phone"
+              value={profile.phone || ""}
               onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"
+              className="input"
             />
-          </div>
 
-          {/* Location */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Location
-            </label>
             <input
               name="location"
-              placeholder="City / Area"
+              placeholder="Location"
+              value={profile.location || ""}
               onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"
+              className="input"
             />
-          </div>
 
-          {/* Place Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Place Type
-            </label>
             <select
               name="placeType"
+              value={profile.placeType || ""}
               onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"
+              className="input"
             >
-              <option value="">Select place type</option>
+              <option value="">Select Place</option>
               <option value="home">Home</option>
               <option value="pg">PG</option>
               <option value="hotel">Hotel</option>
-              <option value="office">Office</option>
             </select>
-          </div>
 
-          {/* Save Button */}
-          <button
-            type="submit"
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl
-                       hover:bg-blue-700 active:scale-[0.98] transition"
-          >
-            Save Changes
-          </button>
-        </form>
-      </div>
+            <button className="w-full bg-green-600 text-white py-3 rounded">
+              Save Profile
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

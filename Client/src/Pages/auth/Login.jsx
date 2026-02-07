@@ -11,27 +11,25 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const res = await loginUser({ email, password });
-      const { user } = res.data;
+  const res = await loginUser({ email, password });
 
-      login(user);
+  // 🔴 THIS WAS MISSING OR MUST BE HERE
+  localStorage.setItem("token", res.data.token);
 
-      // ROLE BASED REDIRECT
-      if (user.role === "finder") navigate("/finder/dashboard");
-      if (user.role === "cleaner") navigate("/cleaner/dashboard");
-      if (user.role === "admin") navigate("/admin/dashboard");
-    } catch (err) {
-      console.error(err);
-      alert("Invalid email or password");
-    } finally {
-      setLoading(false);
-    }
-  };
+  login(res.data.user);
+
+  if (!res.data.user.profileCompleted) {
+    navigate("/complete-profile");
+    return;
+  }
+
+  if (res.data.user.role === "finder") navigate("/finder/dashboard");
+  if (res.data.user.role === "cleaner") navigate("/cleaner/dashboard");
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100">

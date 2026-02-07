@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../Services/api";
+import api from "../../services/api";
 import { useAuth } from "../../hooks/useAuth";
 
 const CompleteProfile = () => {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth(); // ✅ INSIDE component
   const navigate = useNavigate();
 
   const [form, setForm] = useState({});
@@ -14,12 +14,20 @@ const CompleteProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     await api.post("/profile/complete", form);
 
-    // redirect after completion
+    // ✅ update auth state
+    setUser({
+      ...user,
+      profileCompleted: true,
+    });
+
     if (user.role === "finder") navigate("/finder/dashboard");
     if (user.role === "cleaner") navigate("/cleaner/dashboard");
   };
+
+  if (!user) return null; // safety
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -33,18 +41,47 @@ const CompleteProfile = () => {
           {/* CLEANER FORM */}
           {user.role === "cleaner" && (
             <>
-              <input name="phone" placeholder="Phone" onChange={handleChange} className="input" />
-              <input name="location" placeholder="Location" onChange={handleChange} className="input" />
-              <input name="pricePerDay" placeholder="Price per day" onChange={handleChange} className="input" />
+              <input
+                name="phone"
+                placeholder="Phone"
+                onChange={handleChange}
+                className="input"
+              />
+              <input
+                name="location"
+                placeholder="Location"
+                onChange={handleChange}
+                className="input"
+              />
+              <input
+                name="pricePerDay"
+                placeholder="Price per day"
+                onChange={handleChange}
+                className="input"
+              />
             </>
           )}
 
           {/* FINDER FORM */}
           {user.role === "finder" && (
             <>
-              <input name="phone" placeholder="Phone" onChange={handleChange} className="input" />
-              <input name="location" placeholder="Location" onChange={handleChange} className="input" />
-              <select name="placeType" onChange={handleChange} className="input">
+              <input
+                name="phone"
+                placeholder="Phone"
+                onChange={handleChange}
+                className="input"
+              />
+              <input
+                name="location"
+                placeholder="Location"
+                onChange={handleChange}
+                className="input"
+              />
+              <select
+                name="placeType"
+                onChange={handleChange}
+                className="input"
+              >
                 <option value="">Select Place</option>
                 <option value="home">Home</option>
                 <option value="pg">PG</option>

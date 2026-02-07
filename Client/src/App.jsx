@@ -19,6 +19,7 @@ import CompleteProfile from "./pages/profile/CompleteProfile";
 
 // navbar
 import Navbar from "./Components/Navbar";
+import RedirectHome from "./pages/RedirectHome";
 
 function App() {
   return (
@@ -27,7 +28,8 @@ function App() {
 
       <Routes>
         {/* auth */}
-        <Route path="/" element={<Login />} />
+       
+<Route path="/" element={<RedirectHome />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 

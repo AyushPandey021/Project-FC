@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import api from "../../Services/api";
+import api from "../../services/api";
 import { Link } from "react-router-dom";
 
 const FinderDashboard = () => {
