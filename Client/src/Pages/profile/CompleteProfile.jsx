@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import { useAuth } from "../../hooks/useAuth";
+import { AuthProvider  } from "../../context/AuthContext";
 
 const CompleteProfile = () => {
-  const { user, setUser } = useAuth(); // ✅ INSIDE component
+  const { user, updateUser  } = AuthProvider (); 
   const navigate = useNavigate();
 
   const [form, setForm] = useState({});
@@ -12,12 +12,15 @@ const CompleteProfile = () => {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    await api.post("/profile/complete", form);
+  console.log("📤 Submitting profile:", form);
 
-    // ✅ update auth state
+  try {
+    const res = await api.post("/profile/complete", form);
+    console.log("✅ Profile saved:", res.data);
+
     setUser({
       ...user,
       profileCompleted: true,
@@ -25,7 +28,13 @@ const CompleteProfile = () => {
 
     if (user.role === "finder") navigate("/finder/dashboard");
     if (user.role === "cleaner") navigate("/cleaner/dashboard");
-  };
+
+  } catch (err) {
+    console.error("❌ Profile submit error:", err.response?.data || err);
+    alert("Profile submit failed. Check console.");
+  }
+};
+
 
   if (!user) return null; // safety
 

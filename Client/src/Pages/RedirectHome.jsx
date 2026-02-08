@@ -1,8 +1,8 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { AuthProvider  } from "../context/AuthContext";
 
 const RedirectHome = () => {
-  const { user } = useAuth();
+  const { user } = AuthProvider ();
 
   if (!user) return <Navigate to="/login" />;
 

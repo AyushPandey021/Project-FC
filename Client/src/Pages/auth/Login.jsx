@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../../services/auth";
-import { useAuth } from "../../hooks/useAuth";
+import { AuthProvider  } from "../../context/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -9,7 +9,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = AuthProvider ();
 
 const handleSubmit = async (e) => {
   e.preventDefault();

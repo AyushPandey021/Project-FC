@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../services/api";
-import { useAuth } from "../../hooks/useAuth";
+import { AuthProvider  } from "../../context/AuthContext";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = AuthProvider ();
 
   const [form, setForm] = useState({
     name: "",
@@ -20,30 +20,25 @@ const Signup = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const res = await api.post("/auth/signup", form);
+    const res = await api.post("/auth/signup", form);
 
-  // 🔴 MUST SAVE TOKEN
-  localStorage.setItem("token", res.data.token);
+    // 🔴 MUST SAVE TOKEN
+    localStorage.setItem("token", res.data.token);
 
-  login(res.data.user);
+    login(res.data.user);
 
-  navigate("/complete-profile");
-};
-
+    navigate("/complete-profile");
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-
-        <h2 className="text-3xl font-bold text-center mb-6">
-          Create Account
-        </h2>
+        <h2 className="text-3xl font-bold text-center mb-6">Create Account</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-
           <input
             name="name"
             placeholder="Full Name"
