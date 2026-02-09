@@ -23,26 +23,27 @@ import RedirectHome from "./pages/RedirectHome";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Navbar />
+ <BrowserRouter>
+  <Navbar />
 
-      <Routes>
-        {/* auth */}
-       
-<Route path="/" element={<RedirectHome />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+  <Routes>
+    {/* auth */}
+    <Route path="/" element={<Login />} />
+    <Route path="/login" element={<Login />} />
+    <Route path="/signup" element={<Signup />} />
 
-        {/* profile */}
-        <Route path="/complete-profile" element={<CompleteProfile />} />
-<Route path="/finder/profile" element={<FinderProfile />} />
-<Route path="/cleaner/profile" element={<CleanerProfile />} />
-        {/* dashboards */}
-        <Route path="/finder/dashboard" element={<FinderDashboard />} />
-        <Route path="/cleaner/dashboard" element={<CleanerDashboard />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      </Routes>
-    </BrowserRouter>
+    {/* dashboards */}
+    <Route path="/finder/dashboard" element={<FinderDashboard />} />
+    <Route path="/cleaner/dashboard" element={<CleanerDashboard />} />
+    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+    {/* profile */}
+    <Route path="/finder/profile" element={<FinderProfile />} />
+    <Route path="/cleaner/profile" element={<CleanerProfile />} />
+    <Route path="/complete-profile" element={<CompleteProfile />} />
+  </Routes>
+</BrowserRouter>
+
   );
 }
 

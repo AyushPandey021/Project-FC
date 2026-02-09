@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getMyProfile, completeProfile } from "../../services/profile";
+import { useAuth } from "../../context/AuthContext";
 
 const FinderProfile = () => {
-  const [user, setUser] = useState(null);
+  const { user, updateUser } = useAuth(); // ✅ use global auth
+  const navigate = useNavigate();
+
   const [profile, setProfile] = useState({});
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     getMyProfile().then((res) => {
-      setUser(res.data.user);
       setProfile(res.data.profile || {});
     });
   }, []);
 
   if (!user) return null;
 
+  // 🔢 Progress calculation
   const requiredFields = ["phone", "location", "placeType"];
   const filled = requiredFields.filter((f) => profile?.[f]).length;
   const progress = Math.round((filled / requiredFields.length) * 100);
@@ -25,9 +29,18 @@ const FinderProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     await completeProfile(profile);
+
+    // ✅ update global auth + localStorage
+    updateUser({
+      ...user,
+      profileCompleted: true,
+    });
+
     setShowForm(false);
-    alert("✅ Profile completed successfully");
+
+    alert("✅ Profile completed successfully. You can now use all services.");
   };
 
   return (
@@ -41,38 +54,41 @@ const FinderProfile = () => {
           Role: {user.role}
         </p>
 
-        {/* PROGRESS */}
+        {/* PROGRESS BAR */}
         <div className="mb-4">
           <div className="flex justify-between text-sm">
             <span>Profile Progress</span>
             <span>{user.profileCompleted ? "100%" : `${progress}%`}</span>
           </div>
+
           <div className="h-2 bg-gray-200 rounded">
             <div
-              className={`h-2 rounded transition-all ${
+              className={`h-2 rounded transition-all duration-300 ${
                 user.profileCompleted ? "bg-green-500" : "bg-blue-500"
               }`}
-              style={{ width: user.profileCompleted ? "100%" : `${progress}%` }}
+              style={{
+                width: user.profileCompleted ? "100%" : `${progress}%`,
+              }}
             />
           </div>
         </div>
 
-        {/* STATUS */}
+        {/* STATUS / ACTION */}
         {user.profileCompleted ? (
           <p className="text-green-600 font-semibold">
-            ✔ Profile Completed
+            ✔ Profile completed successfully. You can use all services.
           </p>
         ) : (
           <button
             onClick={() => setShowForm(true)}
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Complete Your Profile
           </button>
         )}
       </div>
 
-      {/* FORM */}
+      {/* COMPLETE PROFILE FORM */}
       {showForm && (
         <div className="max-w-2xl bg-white rounded-xl p-6 shadow mt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -83,6 +99,7 @@ const FinderProfile = () => {
               value={profile.phone || ""}
               onChange={handleChange}
               className="input"
+              required
             />
 
             <input
@@ -91,6 +108,7 @@ const FinderProfile = () => {
               value={profile.location || ""}
               onChange={handleChange}
               className="input"
+              required
             />
 
             <select
@@ -98,14 +116,16 @@ const FinderProfile = () => {
               value={profile.placeType || ""}
               onChange={handleChange}
               className="input"
+              required
             >
               <option value="">Select Place</option>
               <option value="home">Home</option>
               <option value="pg">PG</option>
               <option value="hotel">Hotel</option>
+              <option value="office">Office</option>
             </select>
 
-            <button className="w-full bg-green-600 text-white py-3 rounded">
+            <button className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700">
               Save Profile
             </button>
           </form>

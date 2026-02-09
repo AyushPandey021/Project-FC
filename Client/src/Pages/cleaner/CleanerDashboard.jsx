@@ -2,18 +2,45 @@ import { Link } from "react-router-dom";
 
 const CleanerDashboard = () => {
   const cards = [
-    { title: "Request Job", path: "/cleaner/RequestJob", color: "from-blue-500 to-indigo-500" },
-    { title: "Available Jobs", path: "/cleaner/AvailableJobs", color: "from-green-500 to-emerald-500" },
-    { title: "My Jobs", path: "/cleaner/MyJobs", color: "from-purple-500 to-pink-500" },
-    { title: "Active Jobs", path: "/cleaner/ActiveJobs", color: "from-orange-500 to-red-500" },
-    { title: "Earnings", path: "/cleaner/Earnings", color: "from-yellow-500 to-amber-500" },
-    { title: "Notifications", path: "/cleaner/Notifications", color: "from-cyan-500 to-sky-500" },
-    { title: "Profile", path: "/cleaner/Profile", color: "from-gray-600 to-gray-800" },
+    {
+      title: "Request Job",
+      path: "/cleaner/RequestJob",
+      color: "from-blue-500 to-indigo-500",
+    },
+    {
+      title: "Available Jobs",
+      path: "/cleaner/AvailableJobs",
+      color: "from-green-500 to-emerald-500",
+    },
+    {
+      title: "My Jobs",
+      path: "/cleaner/MyJobs",
+      color: "from-purple-500 to-pink-500",
+    },
+    {
+      title: "Active Jobs",
+      path: "/cleaner/ActiveJobs",
+      color: "from-orange-500 to-red-500",
+    },
+    {
+      title: "Earnings",
+      path: "/cleaner/Earnings",
+      color: "from-yellow-500 to-amber-500",
+    },
+    {
+      title: "Notifications",
+      path: "/cleaner/Notifications",
+      color: "from-cyan-500 to-sky-500",
+    },
+    {
+      title: "Profile",
+      path: "/cleaner/Profile",
+      color: "from-gray-600 to-gray-800",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 p-6">
-      
       {/* Header */}
       <div className="mb-8 animate-fade-in">
         <h2 className="text-3xl font-bold text-gray-800">

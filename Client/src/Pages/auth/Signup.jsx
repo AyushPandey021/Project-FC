@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../services/api";
-import { AuthProvider  } from "../../context/AuthContext";
+import { useAuth  } from "../../context/AuthContext";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const { login } = AuthProvider ();
+  const { login } = useAuth ();
 
   const [form, setForm] = useState({
     name: "",
