@@ -1,92 +1,104 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getMyProfile, updateAvailability } from "../../services/profile";
 
 const CleanerDashboard = () => {
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const res = await getMyProfile();
+      setProfile(res.data.profile);
+      setLoading(false);
+    })();
+  }, []);
+
+  if (loading || !profile) return null;
+
+  const toggleStatus = async () => {
+    const res = await updateAvailability(!profile.availability);
+    setProfile({ ...profile, availability: res.data.availability });
+  };
+
   const cards = [
     {
       title: "Request Job",
-      path: "/cleaner/RequestJob",
+      path: "/cleaner/requestjob",
+      disabled: !profile.availability,
       color: "from-blue-500 to-indigo-500",
     },
     {
       title: "Available Jobs",
-      path: "/cleaner/AvailableJobs",
+      path: "/cleaner/availablejobs",
       color: "from-green-500 to-emerald-500",
     },
     {
       title: "My Jobs",
-      path: "/cleaner/MyJobs",
+      path: "/cleaner/myjobs",
       color: "from-purple-500 to-pink-500",
     },
     {
-      title: "Active Jobs",
-      path: "/cleaner/ActiveJobs",
-      color: "from-orange-500 to-red-500",
-    },
-    {
-      title: "Earnings",
-      path: "/cleaner/Earnings",
-      color: "from-yellow-500 to-amber-500",
-    },
-    {
-      title: "Notifications",
-      path: "/cleaner/Notifications",
-      color: "from-cyan-500 to-sky-500",
-    },
-    {
       title: "Profile",
-      path: "/cleaner/Profile",
+      path: "/cleaner/profile",
       color: "from-gray-600 to-gray-800",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 p-6">
-      {/* Header */}
-      <div className="mb-8 animate-fade-in">
-        <h2 className="text-3xl font-bold text-gray-800">
-          Cleaner Dashboard 👋
-        </h2>
-        <p className="text-gray-500 mt-1">
-          Manage your jobs, earnings, and profile
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-100 p-6">
+      {/* HEADER */}
+      <h2 className="text-3xl font-bold mb-6">Cleaner Dashboard</h2>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-        <div className="bg-white rounded-2xl p-5 shadow hover:shadow-lg transition">
-          <p className="text-sm text-gray-500">Status</p>
-          <p className="text-xl font-semibold text-green-600">Available</p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-5 shadow hover:shadow-lg transition">
-          <p className="text-sm text-gray-500">Today Jobs</p>
-          <p className="text-xl font-semibold text-gray-800">2</p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-5 shadow hover:shadow-lg transition">
-          <p className="text-sm text-gray-500">Today Earnings</p>
-          <p className="text-xl font-semibold text-gray-800">₹1,200</p>
-        </div>
-      </div>
-
-      {/* Navigation Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cards.map((card, index) => (
-          <Link
-            key={index}
-            to={card.path}
-            className={`group relative overflow-hidden rounded-2xl p-6 text-white shadow-lg 
-                       bg-gradient-to-r ${card.color}
-                       transform hover:-translate-y-1 hover:shadow-2xl
-                       transition-all duration-300`}
+      {/* STATUS CARD */}
+      <div className="bg-white rounded-xl p-5 shadow flex items-center justify-between mb-8">
+        <div>
+          <p className="text-sm text-gray-500">Current Status</p>
+          <p
+            className={`text-xl font-semibold ${
+              profile.availability ? "text-green-600" : "text-red-500"
+            }`}
           >
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-black transition"></div>
-            <h3 className="text-xl font-semibold">{card.title}</h3>
-            <p className="text-sm opacity-90 mt-1">
-              Open {card.title.toLowerCase()}
-            </p>
-          </Link>
-        ))}
+            {profile.availability ? "Available" : "Not Available"}
+          </p>
+        </div>
+
+        <button
+          onClick={toggleStatus}
+          className={`px-6 py-2 rounded-full text-white font-medium transition ${
+            profile.availability
+              ? "bg-red-500 hover:bg-red-600"
+              : "bg-green-600 hover:bg-green-700"
+          }`}
+        >
+          {profile.availability ? "Go Offline" : "Go Online"}
+        </button>
+      </div>
+
+      {/* NAVIGATION CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {cards.map((card, i) =>
+          card.disabled ? (
+            <div
+              key={i}
+              className="rounded-2xl p-6 bg-gray-300 text-gray-500 cursor-not-allowed"
+            >
+              <h3 className="text-xl font-semibold">{card.title}</h3>
+              <p className="text-sm mt-1">Unavailable while offline</p>
+            </div>
+          ) : (
+            <Link
+              key={i}
+              to={card.path}
+              className={`rounded-2xl p-6 text-white shadow-lg
+                bg-gradient-to-r ${card.color}
+                hover:-translate-y-1 transition`}
+            >
+              <h3 className="text-xl font-semibold">{card.title}</h3>
+              <p className="text-sm opacity-90 mt-1">Open</p>
+            </Link>
+          )
+        )}
       </div>
     </div>
   );

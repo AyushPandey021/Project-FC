@@ -1,174 +1,245 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getMyProfile, completeProfile } from "../../services/profile";
+import { useAuth } from "../../context/AuthContext";
+
+const JOB_TYPES = ["Home", "PG", "Hotel", "Office"];
 
 const CleanerProfile = () => {
-  const [form, setForm] = useState({
-    name: "Ramesh Kumar",
-    email: "ramesh@example.com",
-    phone: "",
-    location: "",
-    jobTypes: [],
-    pricePerDay: "",
-    availability: true,
-  });
+  const { updateUser } = useAuth();
 
-  const jobOptions = ["Home", "PG", "Hotel", "Office"];
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState({});
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  /* ---------------- FETCH PROFILE ---------------- */
+  useEffect(() => {
+    (async () => {
+      const res = await getMyProfile();
+      setUser(res.data.user);
+      setProfile(res.data.profile || {});
+      setLoading(false);
+    })();
+  }, []);
 
-  const handleJobTypeChange = (type) => {
-    setForm((prev) => ({
+  if (loading || !user) return null;
+
+  /* ---------------- PROGRESS ---------------- */
+  const requiredFields = ["phone", "location", "pricePerDay"];
+  const filled = requiredFields.filter((f) => profile?.[f]).length;
+  const progress = Math.round((filled / requiredFields.length) * 100);
+
+  /* ---------------- HANDLERS ---------------- */
+  const handleChange = (e) =>
+    setProfile({ ...profile, [e.target.name]: e.target.value });
+
+  const toggleJobType = (type) => {
+    setProfile((prev) => ({
       ...prev,
-      jobTypes: prev.jobTypes.includes(type)
+      jobTypes: prev.jobTypes?.includes(type)
         ? prev.jobTypes.filter((t) => t !== type)
-        : [...prev.jobTypes, type],
+        : [...(prev.jobTypes || []), type],
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Cleaner Profile Updated:", form);
-    alert("Profile updated successfully ✅");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+
+  for (let field of requiredFields) {
+    if (!profile[field]) {
+      setError("Please fill all required fields");
+      return;
+    }
+  }
+
+  if (!profile.jobTypes?.length) {
+    setError("Select at least one job type");
+    return;
+  }
+
+  await completeProfile(profile);
+
+  // ✅ UPDATE BOTH CONTEXT + LOCAL STATE
+  const updatedUser = {
+    ...user,
+    name: profile.name || user.name,
+    profileCompleted: true,
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-200 p-6">
+  updateUser(updatedUser);
+  setUser(updatedUser); 
 
-      {/* Header */}
-      <div className="mb-8 animate-fade-in">
-        <h2 className="text-3xl font-bold text-gray-800">
-          My Profile
-        </h2>
-        <p className="text-gray-500 mt-1">
-          Manage your work details and availability
-        </p>
+  setOpen(false);
+};
+
+
+
+  /* ================= UI ================= */
+  return (
+    <div className="min-h-screen bg-gray-100 p-6 relative">
+
+      {/* MAIN CARD */}
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold">{user.name}</h2>
+        <p className="text-gray-500">{user.email}</p>
+        <p className="text-sm text-gray-400">Role: Cleaner</p>
+
+        {/* PROGRESS */}
+        <div className="mt-6">
+          <div className="flex justify-between text-sm mb-1">
+            <span>Profile Progress</span>
+            <span>{user.profileCompleted ? "100%" : `${progress}%`}</span>
+          </div>
+          <div className="h-2 bg-gray-200 rounded">
+            <div
+              className={`h-2 rounded transition-all ${
+                user.profileCompleted ? "bg-green-500" : "bg-blue-500"
+              }`}
+              style={{ width: user.profileCompleted ? "100%" : `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* STATUS */}
+        {user.profileCompleted ? (
+          <>
+            <div className="mt-4 flex items-center gap-4">
+              <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                ✔ Profile Verified
+              </span>
+              <button
+                onClick={() => setOpen(true)}
+                className="text-blue-600 hover:underline"
+              >
+                Edit Profile
+              </button>
+            </div>
+
+            {/* READ-ONLY INFO */}
+            <div className="mt-6 bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+              <p><b>Phone:</b> {profile.phone}</p>
+              <p><b>Location:</b> {profile.location}</p>
+              <p><b>Price / Day:</b> ₹{profile.pricePerDay}</p>
+              <p><b>Job Types:</b> {profile.jobTypes?.join(", ")}</p>
+            </div>
+          </>
+        ) : (
+          <button
+            onClick={() => setOpen(true)}
+            className="mt-5 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Complete Your Profile
+          </button>
+        )}
       </div>
 
-      {/* Profile Card */}
-      <div className="max-w-2xl bg-white rounded-2xl shadow-xl p-8">
+      {/* BACKDROP */}
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+        />
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+      {/* SLIDE PANEL */}
+      <div
+        className={`fixed top-0 right-0 h-full w-full sm:w-1/2 bg-white z-50
+        transform transition-transform duration-300
+        ${open ? "translate-x-0" : "translate-x-full"}`}
+      >
+        <div className="p-6 h-full overflow-y-auto">
 
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Full Name
-            </label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Email (readonly) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Email
-            </label>
-            <input
-              value={form.email}
-              disabled
-              className="w-full px-4 py-3 border rounded-xl bg-gray-100 cursor-not-allowed"
-            />
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Phone Number
-            </label>
-            <input
-              name="phone"
-              placeholder="Enter phone number"
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Location */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Location
-            </label>
-            <input
-              name="location"
-              placeholder="City / Area"
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Job Types */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">
-              Job Types
-            </label>
-            <div className="flex flex-wrap gap-3">
-              {jobOptions.map((type) => (
-                <button
-                  type="button"
-                  key={type}
-                  onClick={() => handleJobTypeChange(type)}
-                  className={`px-4 py-2 rounded-full border transition
-                    ${
-                      form.jobTypes.includes(type)
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-700 border-gray-300 hover:border-blue-500"
-                    }`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Price */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Price Per Day (₹)
-            </label>
-            <input
-              name="pricePerDay"
-              type="number"
-              placeholder="e.g. 800"
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Availability */}
-          <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl">
-            <span className="text-sm font-medium text-gray-700">
-              Availability Status
-            </span>
+          {/* HEADER */}
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold">
+              {user.profileCompleted ? "Edit Profile" : "Complete Profile"}
+            </h3>
             <button
-              type="button"
-              onClick={() =>
-                setForm({ ...form, availability: !form.availability })
-              }
-              className={`px-5 py-2 rounded-full font-semibold transition
-                ${
-                  form.availability
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-300 text-gray-700"
-                }`}
+              onClick={() => setOpen(false)}
+              className="text-gray-400 hover:text-black text-2xl"
             >
-              {form.availability ? "Available" : "Offline"}
+              ✕
             </button>
           </div>
 
-          {/* Save */}
-          <button
-            type="submit"
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl
-                       hover:bg-blue-700 active:scale-[0.98] transition"
-          >
-            Save Changes
-          </button>
-        </form>
+          {/* ERROR */}
+          {error && (
+            <div className="mb-4 bg-red-100 text-red-700 px-4 py-2 rounded">
+              {error}
+            </div>
+          )}
+
+          {/* FORM */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+{/* NAME */}
+<input
+  name="name"
+  placeholder="Full Name"
+  value={profile.name || user.name || ""}
+  onChange={handleChange}
+  className="input"
+/>
+
+            <input
+              name="phone"
+              placeholder="Phone"
+              value={profile.phone || ""}
+              onChange={handleChange}
+              className="input"
+            />
+
+            <input
+              name="location"
+              placeholder="Location"
+              value={profile.location || ""}
+              onChange={handleChange}
+              className="input"
+            />
+
+            {/* JOB TYPES */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Job Types
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {JOB_TYPES.map((type) => (
+                  <button
+                    type="button"
+                    key={type}
+                    onClick={() => toggleJobType(type)}
+                    className={`px-4 py-2 rounded-full border transition
+                      ${
+                        profile.jobTypes?.includes(type)
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white"
+                      }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <input
+              name="pricePerDay"
+              type="number"
+              placeholder="Price per day"
+              value={profile.pricePerDay || ""}
+              onChange={handleChange}
+              className="input"
+            />
+
+            <button
+              type="submit"
+              className="w-full bg-green-600 text-white py-3 rounded-lg
+                         hover:bg-green-700 transition"
+            >
+              Save Profile
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

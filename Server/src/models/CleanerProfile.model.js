@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 export default mongoose.model(
   "CleanerProfile",
   new mongoose.Schema({
@@ -8,7 +7,7 @@ export default mongoose.model(
     location: String,
     jobTypes: [String],
     pricePerDay: Number,
-    status: { type: String, default: "off" },
-    verified: { type: Boolean, default: false }
+    availability: { type: Boolean, default: false }, // ✅ FIX
+    verified: { type: Boolean, default: false },
   })
 );

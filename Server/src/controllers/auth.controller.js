@@ -1,11 +1,17 @@
-import User from "../models/User.model.js";
-import bcrypt from "bcryptjs";
-import { generateToken } from "../utils/jwt.js";
-
-/* ===================== SIGNUP ===================== */
+import User from "../models/User.model";
 export const signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+    console.log("📥 SIGNUP BODY:", req.body);
+
+    // VALIDATION (MUST)
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ msg: "All fields are required" });
+    }
+
+    if (!["finder", "cleaner", "admin"].includes(role)) {
+      return res.status(400).json({ msg: "Invalid role" });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -26,6 +32,8 @@ export const signup = async (req, res) => {
       token: generateToken(user),
       user: {
         id: user._id,
+        name: user.name,          // ✅ ADD
+        email: user.email,        // ✅ ADD
         role: user.role,
         profileCompleted: user.profileCompleted,
       },
@@ -33,39 +41,5 @@ export const signup = async (req, res) => {
   } catch (err) {
     console.error("SIGNUP ERROR:", err);
     res.status(500).json({ msg: "Signup failed" });
-  }
-};
-
-/* ===================== LOGIN ===================== */
-export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // validation
-    if (!email || !password) {
-      return res.status(400).json({ msg: "Email and password required" });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ msg: "Invalid email or password" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ msg: "Invalid email or password" });
-    }
-
-    res.json({
-      token: generateToken(user),
-      user: {
-        id: user._id,
-        role: user.role,
-        profileCompleted: user.profileCompleted,
-      },
-    });
-  } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    res.status(500).json({ msg: "Login failed" });
   }
 };

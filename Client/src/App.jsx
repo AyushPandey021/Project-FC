@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import "./App.css";
 
 // auth
 import Login from "./pages/auth/Login";
@@ -21,6 +22,7 @@ import CompleteProfile from "./pages/profile/CompleteProfile";
 import Navbar from "./Components/Navbar";
 import RedirectHome from "./pages/RedirectHome";
 
+
 function App() {
   return (
  <BrowserRouter>
@@ -28,9 +30,10 @@ function App() {
 
   <Routes>
     {/* auth */}
-    <Route path="/" element={<Login />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/signup" element={<Signup />} />
+<Route path="/" element={<RedirectHome />} />
+<Route path="/login" element={<Login />} />
+<Route path="/signup" element={<Signup />} />
+
 
     {/* dashboards */}
     <Route path="/finder/dashboard" element={<FinderDashboard />} />
