@@ -1,13 +1,26 @@
 import mongoose from "mongoose";
-export default mongoose.model(
-  "CleanerProfile",
-  new mongoose.Schema({
-    userId: mongoose.Schema.Types.ObjectId,
-    phone: String,
-    location: String,
-    jobTypes: [String],
-    pricePerDay: Number,
-    availability: { type: Boolean, default: false }, // ✅ FIX
-    verified: { type: Boolean, default: false },
-  })
-);
+
+const cleanerProfileSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+
+  phone: String,
+  location: String,
+  jobTypes: [String],
+  pricePerDay: Number,
+
+ availability: {
+  type: Boolean,
+  default: false,
+}
+,
+
+  verified: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+export default mongoose.model("CleanerProfile", cleanerProfileSchema);

@@ -30,7 +30,9 @@ const FinderProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    await completeProfile(profile);
+   const res = await completeProfile(profile);
+setProfile(res.data.profile);
+
 
     // ✅ update global auth + localStorage
     updateUser({

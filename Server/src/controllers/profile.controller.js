@@ -19,35 +19,50 @@ export const getMyProfile = async (req, res) => {
 
 /* ================= COMPLETE PROFILE ================= */
 export const completeProfile = async (req, res) => {
-  const userId = req.user.id;
-  const role = req.user.role;
+  try {
+    const userId = req.user.id;
 
-  let profile;
+    const {
+      phone,
+      location,
+      jobTypes,
+      pricePerDay,
+      name,
+    } = req.body;
 
-  if (role === "cleaner") {
-    profile = await CleanerProfile.findOneAndUpdate(
+    // 🔒 Only allow specific fields
+    const profile = await CleanerProfile.findOneAndUpdate(
       { userId },
-      { ...req.body, userId },
+      {
+        phone,
+        location,
+        jobTypes,
+        pricePerDay: Number(pricePerDay),
+      },
       { new: true, upsert: true }
     );
-  }
 
-  if (role === "finder") {
-    profile = await FinderProfile.findOneAndUpdate(
-      { userId },
-      { ...req.body, userId },
-      { new: true, upsert: true }
-    );
-  }
-
-  await User.findByIdAndUpdate(userId, {
-    profileCompleted: true,
-  });
-
-  res.json({ success: true, profile });
+    // 🔒 Only allow name update (NOT email, NOT role)
+const updateData = {
+  profileCompleted: true,
 };
 
-/* ================= TOGGLE AVAILABILITY ================= */
+if (name && name.trim() !== "") {
+  updateData.name = name;
+}
+
+await User.findByIdAndUpdate(userId, updateData);
+
+
+    res.json({ success: true, profile });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Profile update failed" });
+  }
+};
+
+
 export const toggleAvailability = async (req, res) => {
   const { availability } = req.body;
 

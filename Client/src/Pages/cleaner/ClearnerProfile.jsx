@@ -31,8 +31,14 @@ const CleanerProfile = () => {
   const progress = Math.round((filled / requiredFields.length) * 100);
 
   /* ---------------- HANDLERS ---------------- */
-  const handleChange = (e) =>
-    setProfile({ ...profile, [e.target.name]: e.target.value });
+const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  setProfile({
+    ...profile,
+    [name]: name === "pricePerDay" ? Number(value) : value,
+  });
+};
 
   const toggleJobType = (type) => {
     setProfile((prev) => ({
@@ -59,20 +65,23 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  await completeProfile(profile);
+  const res = await completeProfile(profile);
 
-  // ✅ UPDATE BOTH CONTEXT + LOCAL STATE
-  const updatedUser = {
-    ...user,
-    name: profile.name || user.name,
-    profileCompleted: true,
-  };
+  setProfile(res.data.profile);
+
+const updatedUser = {
+  ...user,
+  name: profile.name?.trim() || user.name,
+  profileCompleted: true,
+};
+
 
   updateUser(updatedUser);
-  setUser(updatedUser); 
+  setUser(updatedUser);
 
   setOpen(false);
 };
+
 
 
 
@@ -173,14 +182,30 @@ const handleSubmit = async (e) => {
 
           {/* FORM */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* EMAIL - READ ONLY */}
+<input
+  value={user.email}
+  disabled
+  className="input bg-gray-100 cursor-not-allowed"
+/>
+
+{/* ROLE - READ ONLY */}
+<input
+  value="Cleaner"
+  disabled
+  className="input bg-gray-100 cursor-not-allowed"
+/>
+
 {/* NAME */}
+
 <input
   name="name"
   placeholder="Full Name"
-  value={profile.name || user.name || ""}
+  value={profile.name ?? user.name ?? ""}
   onChange={handleChange}
   className="input"
 />
+
 
             <input
               name="phone"

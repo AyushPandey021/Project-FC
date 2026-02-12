@@ -28,11 +28,11 @@ const CleanerDashboard = () => {
       disabled: !profile.availability,
       color: "from-blue-500 to-indigo-500",
     },
-    {
-      title: "Available Jobs",
-      path: "/cleaner/availablejobs",
-      color: "from-green-500 to-emerald-500",
-    },
+    // {
+    //   title: "Available Jobs",
+    //   // path: "/cleaner/availablejobs",
+    //   color: "from-green-500 to-emerald-500",
+    // },
     {
       title: "My Jobs",
       path: "/cleaner/myjobs",
