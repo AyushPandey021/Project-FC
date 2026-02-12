@@ -8,6 +8,7 @@ export const createJob = async (req, res) => {
       age,
       phone,
       workType,
+      location,
       workTime,
       experience,
       paymentMode,
@@ -16,7 +17,7 @@ export const createJob = async (req, res) => {
     } = req.body;
 
     /* ================= REQUIRED FIELD VALIDATION ================= */
-    if (!name || !age || !phone || !workType || !workTime || !paymentMode || !amount) {
+    if (!name || !age || !phone  || !location|| !workType || !workTime || !paymentMode || !amount) {
       return res.status(400).json({
         msg: "All required fields must be filled",
       });
@@ -40,11 +41,12 @@ export const createJob = async (req, res) => {
     }
 
     /* ================= AVAILABILITY CHECK ================= */
- if (cleanerProfile.availability  ) {
+if (!cleanerProfile.availability) {
   return res.status(400).json({
     msg: "You are currently not available",
   });
 }
+
 
 
     /* ================= CREATE JOB ================= */
@@ -54,6 +56,7 @@ export const createJob = async (req, res) => {
       age: Number(age),
       phone,
       workType,
+      location,
       workTime,
       experience: experience ? Number(experience) : 0,
       paymentMode,
@@ -74,3 +77,50 @@ export const createJob = async (req, res) => {
     });
   }
 };
+ /* ================= MY JOB ================= */
+export const getMyJobs = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ msg: "Unauthorized" });
+    }
+
+    const jobs = await Job.find({
+      cleanerId: req.user._id   // 👈 FIXED
+    }).sort({ createdAt: -1 });
+
+    res.json(jobs);
+
+  } catch (error) {
+    console.error("GET MY JOBS ERROR:", error);
+    res.status(500).json({ msg: "Failed to fetch jobs" });
+  }
+};
+
+
+// update 
+  export const updateJob = async (req, res) => {
+    try {
+      console.log("UPDATE ROUTE HIT");
+
+      const job = await Job.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          cleanerId: req.user.id
+        },
+        {
+          ...req.body
+        },
+        { new: true }
+      );
+
+      if (!job) {
+        return res.status(404).json({ msg: "Job not found" });
+      }
+
+      res.json(job);
+
+    } catch (error) {
+      console.error("UPDATE ERROR:", error);
+      res.status(500).json({ msg: "Failed to update job" });
+    }
+  };

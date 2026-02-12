@@ -20,6 +20,7 @@ import CompleteProfile from "./pages/profile/CompleteProfile";
 // navbar
 import Navbar from "./Components/Navbar";
 import RedirectHome from "./pages/RedirectHome";
+import Myjob from "./pages/cleaner/Myjob";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
 <Route path="/cleaner/availablejobs" element={<AvailableJobs />} />
 <Route path="/cleaner/earnings" element={<Earnings />} />
+<Route path="/cleaner/myjobs" element={<Myjob />} />
 
         {/* dashboards */}
         <Route path="/finder/dashboard" element={<FinderDashboard />} />

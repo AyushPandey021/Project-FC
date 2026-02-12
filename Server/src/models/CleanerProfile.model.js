@@ -10,14 +10,11 @@ const cleanerProfileSchema = new mongoose.Schema({
   location: String,
   jobTypes: [String],
   pricePerDay: Number,
-
- availability: {
+availability: {
   type: Boolean,
   default: false,
-}
-,
-
-  verified: {
+},
+verified: {
     type: Boolean,
     default: false,
   },

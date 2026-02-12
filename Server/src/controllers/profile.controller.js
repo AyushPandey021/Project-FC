@@ -69,7 +69,7 @@ export const toggleAvailability = async (req, res) => {
   const profile = await CleanerProfile.findOneAndUpdate(
     { userId: req.user.id },
     { availability },
-    { new: true, upsert: true }
+    { new: true}
   );
 
   res.json({ availability: profile.availability });
