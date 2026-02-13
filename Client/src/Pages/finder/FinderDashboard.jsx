@@ -1,13 +1,58 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import api from "../../services/api";
 import { Link } from "react-router-dom";
 
 const FinderDashboard = () => {
+
+  const [location, setLocation] = useState("");
+  const [loadingLocation, setLoadingLocation] = useState(true);
+
   useEffect(() => {
-    // test backend connection
+
+    // Backend test
     api.get("/")
       .then(res => console.log(res.data))
       .catch(err => console.error(err));
+
+    // Fetch Location
+    if (!navigator.geolocation) {
+      setLocation("Location not supported");
+      setLoadingLocation(false);
+      return;
+    }
+
+ navigator.geolocation.getCurrentPosition(
+  async (position) => {
+    try {
+      const { latitude, longitude } = position.coords;
+
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+      );
+
+      const data = await res.json();
+
+      // FULL EXACT ADDRESS
+      setLocation(data.display_name);
+
+    } catch (error) {
+      setLocation("Unable to fetch location");
+    } finally {
+      setLoadingLocation(false);
+    }
+  },
+  () => {
+    setLocation("Location permission denied");
+    setLoadingLocation(false);
+  },
+  {
+    enableHighAccuracy: true,  // 🔥 more accurate
+    timeout: 10000,
+    maximumAge: 0
+  }
+);
+
+
   }, []);
 
   const cards = [
@@ -29,7 +74,7 @@ const FinderDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-200 p-6">
 
       {/* Header */}
-      <div className="mb-10 animate-fade-in">
+      <div className="mb-10">
         <h2 className="text-3xl font-bold text-gray-800">
           Finder Dashboard 👋
         </h2>
@@ -40,11 +85,21 @@ const FinderDashboard = () => {
 
       {/* Quick Info Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+
+        {/* Location Card */}
         <div className="bg-white rounded-2xl p-5 shadow hover:shadow-lg transition">
           <p className="text-sm text-gray-500">Location</p>
-          <p className="text-lg font-semibold text-gray-800">
-            Your Area
-          </p>
+
+          {loadingLocation ? (
+            <div className="flex items-center gap-2 mt-2">
+              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm text-gray-400">Fetching location...</span>
+            </div>
+          ) : (
+            <p className="text-lg font-semibold text-gray-800">
+              {location}
+            </p>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl p-5 shadow hover:shadow-lg transition">
@@ -74,7 +129,6 @@ const FinderDashboard = () => {
                         transform hover:-translate-y-1
                         transition-all duration-300`}
           >
-            {/* Hover overlay */}
             <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition"></div>
 
             <h3 className="text-xl font-semibold">

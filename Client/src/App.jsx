@@ -21,6 +21,7 @@ import CompleteProfile from "./pages/profile/CompleteProfile";
 import Navbar from "./Components/Navbar";
 import RedirectHome from "./pages/RedirectHome";
 import Myjob from "./pages/cleaner/Myjob";
+import FindCearners from "./pages/finder/FindCearners";
 
 function App() {
   return (
@@ -47,6 +48,8 @@ function App() {
         <Route path="/finder/profile" element={<FinderProfile />} />
         <Route path="/cleaner/profile" element={<CleanerProfile />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
+        <Route path="/finder/cleanerlist" element={<FindCearners  />} />
+
       </Routes>
     </BrowserRouter>
   );

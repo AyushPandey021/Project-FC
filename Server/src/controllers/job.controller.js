@@ -124,3 +124,25 @@ export const getMyJobs = async (req, res) => {
       res.status(500).json({ msg: "Failed to update job" });
     }
   };
+
+  // delete 
+  export const deleteJob = async (req, res) => {
+  try {
+    console.log("DELETE ROUTE HIT");
+
+    const job = await Job.findOneAndDelete({
+      _id: req.params.id,
+      cleanerId: req.user.id   // only owner can delete
+    });
+
+    if (!job) {
+      return res.status(404).json({ msg: "Job not found" });
+    }
+
+    res.json({ msg: "Job deleted successfully" });
+
+  } catch (error) {
+    console.error("DELETE ERROR:", error);
+    res.status(500).json({ msg: "Failed to delete job" });
+  }
+};

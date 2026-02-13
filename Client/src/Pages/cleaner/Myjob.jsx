@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMyJobs, updateJob } from "../../services/job";
+import { getMyJobs, updateJob,deleteJob } from "../../services/job";
 
 const Myjob = () => {
   const [jobs, setJobs] = useState([]);
@@ -15,7 +15,6 @@ const Myjob = () => {
       setLoading(false);
     })();
   }, []);
-
   const handleEditChange = (e) => {
     setEditData({ ...editData, [e.target.name]: e.target.value });
   };
@@ -89,7 +88,29 @@ const handleUpdate = async () => {
                   >
                     Edit
                   </button>
+                  
                 )}
+<button
+  onClick={async () => {
+    if (window.confirm("Are you sure you want to delete this job?")) {
+      try {
+        const res = await deleteJob(job._id);
+        console.log("DELETE RESPONSE:", res);
+
+        setJobs(jobs.filter(j => j._id !== job._id));
+
+      } catch (err) {
+        console.error("DELETE ERROR:", err.response);
+        alert(err.response?.data?.msg || "Delete failed");
+      }
+    }
+  }}
+  className="text-red-600 underline"
+>
+  Delete
+</button>
+
+
               </div>
 
               {/* VIEW PANEL */}
