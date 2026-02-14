@@ -4,18 +4,21 @@ import api from "../../services/api";
 import { getMyProfile } from "../../services/profile";
 
 const RequestJob = () => {
-  const [form, setForm] = useState({
-    name: "",
-    age: "",
-    phone: "",
-    workType: "",
-    workTime: "",
-    experience: "",
-    paymentMode: "",
-    amount: "",
-    description: "",
-    location: ""
-  });
+const [form, setForm] = useState({
+  name: "",
+  age: "",
+  phone: "",
+  workType: "",
+  workTime: "",
+  experience: "",
+  paymentMode: "",
+  amount: "",
+  description: "",
+  location: "",
+  latitude: null,
+  longitude: null
+});
+
 
   const [error, setError] = useState("");
 useEffect(() => {
@@ -33,17 +36,24 @@ useEffect(() => {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    try {
-      await api.post("/jobs/create", form);
-      alert("✅ Job Request Created Successfully");
-    } catch (err) {
-      setError(err.response?.data?.msg || "Failed to create job");
-    }
-  };
+  if (!form.latitude || !form.longitude) {
+    setError("Please click 'Use My Location' before submitting.");
+    return;
+  }
+
+  try {
+    await api.post("/jobs/create", form);
+    alert("✅ Job Request Created Successfully");
+  } catch (err) {
+    console.log(err.response);
+    setError(err.response?.data?.msg || "Failed to create job");
+  }
+};
+
 
 const fetchLocation = () => {
   if (!navigator.geolocation) {

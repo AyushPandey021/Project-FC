@@ -12,6 +12,8 @@ const CleanerProfile = () => {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [locating, setLocating] = useState(false);
+
 
   /* ---------------- FETCH PROFILE ---------------- */
   useEffect(() => {
@@ -26,7 +28,8 @@ const CleanerProfile = () => {
   if (loading || !user) return null;
 
   /* ---------------- PROGRESS ---------------- */
-  const requiredFields = ["phone", "location", "pricePerDay"];
+const requiredFields = ["phone", "location", "pricePerDay", "latitude", "longitude"];
+
   const filled = requiredFields.filter((f) => profile?.[f]).length;
   const progress = Math.round((filled / requiredFields.length) * 100);
 
@@ -53,9 +56,11 @@ const handleSubmit = async (e) => {
   e.preventDefault();
   setError("");
 
+  const requiredFields = ["phone", "location", "pricePerDay", "latitude", "longitude"];
+
   for (let field of requiredFields) {
     if (!profile[field]) {
-      setError("Please fill all required fields");
+      setError("Please fill all required fields including location");
       return;
     }
   }
@@ -65,22 +70,61 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  const res = await completeProfile(profile);
+  try {
+    const res = await completeProfile(profile);
 
-  setProfile(res.data.profile);
+    setProfile(res.data.profile);
 
-const updatedUser = {
-  ...user,
-  name: profile.name?.trim() || user.name,
-  profileCompleted: true,
+    const updatedUser = {
+      ...user,
+      profileCompleted: true,
+    };
+
+    updateUser(updatedUser);
+    setUser(updatedUser);
+
+    setOpen(false);
+  } catch (err) {
+    console.error(err);
+    setError(err.response?.data?.msg || "Profile update failed");
+  }
 };
 
 
-  updateUser(updatedUser);
-  setUser(updatedUser);
+const fetchLocation = () => {
+  if (!navigator.geolocation) {
+    alert("Geolocation not supported");
+    return;
+  }
 
-  setOpen(false);
+  setLocating(true);
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords;
+
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+      );
+
+      const data = await res.json();
+
+      setProfile(prev => ({
+        ...prev,
+        location: data.display_name,
+        latitude,
+        longitude
+      }));
+
+      setLocating(false);
+    },
+    () => {
+      alert("Unable to fetch location");
+      setLocating(false);
+    }
+  );
 };
+
 
 
 
@@ -90,7 +134,7 @@ const updatedUser = {
     <div className="min-h-screen bg-gray-100 p-6 relative">
 
       {/* MAIN CARD */}
-      <div className="max-w-3xl mx-auto b -white rounded-2xl shadow-lg p-6">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-6">
         <h2 className="text-2xl font-bold">{user.name}</h2>
         <p className="text-gray-500">{user.email}</p>
         <p className="text-sm text-gray-400">Role: Cleaner</p>
@@ -215,13 +259,21 @@ const updatedUser = {
               className="input"
             />
 
-            <input
-              name="location"
-              placeholder="Location"
-              value={profile.location || ""}
-              onChange={handleChange}
-              className="input"
-            />
+           <div className="flex gap-2">
+  <input
+    name="location"
+    placeholder="Location"
+    value={profile.location || ""}
+    readOnly
+    className="input flex-1 bg-gray-100 cursor-not-allowed"
+  />
+
+<button type="button" onClick={fetchLocation}>
+  {locating ? "Fetching..." : "Use My Location"}
+</button>
+
+</div>
+
 
             {/* JOB TYPES */}
             <div>

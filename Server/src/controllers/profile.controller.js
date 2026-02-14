@@ -1,7 +1,7 @@
 import CleanerProfile from "../models/CleanerProfile.model.js";
 import FinderProfile from "../models/FinderProfile.model.js";
 import User from "../models/User.model.js";
-
+import Job from "../models/Job.model.js";
 /* ================= GET MY PROFILE ================= */
 export const getMyProfile = async (req, res) => {
   const user = await User.findById(req.user.id).select("-password");
@@ -135,23 +135,21 @@ export const toggleAvailability = async (req, res) => {
     console.error("TOGGLE STATUS ERROR:", error);
     res.status(500).json({ msg: "Failed to update status" });
   }
+
 };
-
-
-
-
-
-
-// 
-export const getAvailableCleaners = async (req, res) => {
+////
+export const getAvailableJobs = async (req, res) => {
   try {
-    const cleaners = await CleanerProfile.find({
-      status: "on"
-    }).populate("userId", "name");
+    const jobs = await Job.find({ availability: "pending" })
+      .populate("cleanerId", "name");
 
-    res.json(cleaners);
+    res.json(jobs);
   } catch (error) {
-    res.status(500).json({ msg: "Failed to fetch cleaners" });
+    console.error("AVAILABLE JOBS ERROR:", error);
+    res.status(500).json({ msg: "Failed to fetch jobs" });
   }
 };
+
+
+
 

@@ -5,13 +5,14 @@ import { useAuth } from "../../context/AuthContext";
 const FindCearners = () => {
   const { user } = useAuth();
 
-  const [cleaners, setCleaners] = useState([]);
+  const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [selectedJob, setSelectedJob] = useState(null);
 
   /* ================= DISTANCE FUNCTION ================= */
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    if (!lat2 || !lon2) return null;
+    if (lat2 == null || lon2 == null) return null;
 
     const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -24,141 +25,125 @@ const FindCearners = () => {
         Math.sin(dLon / 2) ** 2;
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return (R * c).toFixed(1);
+    return Number((R * c).toFixed(1));
   };
 
-  /* ================= LOAD CLEANERS ================= */
+  /* ================= FETCH JOBS ================= */
   useEffect(() => {
-    const fetchCleaners = () => {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
 
-          try {
-            const res = await api.get("/profile/available-cleaners");
+        try {
+          const res = await api.get("/profile/available-jobs");
 
-            const cleanersArray = Array.isArray(res.data)
-              ? res.data
-              : res.data.cleaners || [];
-
-            if (!cleanersArray.length) {
-              setErrorMsg("No available cleaners found in your area.");
-              setLoading(false);
-              return;
-            }
-
-            const cleanersWithDistance = cleanersArray
-              .map((cleaner) => {
-                const distance = calculateDistance(
-                  latitude,
-                  longitude,
-                  cleaner.latitude,
-                  cleaner.longitude
-                );
-
-                if (!distance) return null;
-
-                return {
-                  ...cleaner,
-                  distance: Number(distance),
-                };
-              })
-              .filter(Boolean)
-              .sort((a, b) => a.distance - b.distance);
-
-            if (!cleanersWithDistance.length) {
-              setErrorMsg("No nearby cleaners found.");
-            } else {
-              setCleaners(cleanersWithDistance);
-              localStorage.setItem(
-                "nearbyCleaners",
-                JSON.stringify(cleanersWithDistance)
-              );
-            }
-          } catch (err) {
-            console.error("Error fetching cleaners:", err);
-            setErrorMsg("Failed to fetch cleaners. Please try again.");
-          } finally {
+          if (!Array.isArray(res.data) || res.data.length === 0) {
+            setErrorMsg("No jobs available right now.");
             setLoading(false);
+            return;
           }
-        },
-        () => {
-          setErrorMsg("Location permission is required to find nearby cleaners.");
+
+          const jobsWithDistance = res.data
+            .map((job) => ({
+              ...job,
+              distance: calculateDistance(
+                latitude,
+                longitude,
+                job.latitude,
+                job.longitude
+              ),
+            }))
+            .sort((a, b) => a.distance - b.distance);
+
+          setJobs(jobsWithDistance);
+        } catch (err) {
+          console.error(err);
+          setErrorMsg("Failed to fetch jobs.");
+        } finally {
           setLoading(false);
         }
-      );
-    };
-
-    // 🔥 Check cache first
-    const cached = localStorage.getItem("nearbyCleaners");
-
-    if (cached) {
-      setCleaners(JSON.parse(cached));
-      setLoading(false);
-    } else {
-      fetchCleaners();
-    }
+      },
+      () => {
+        setErrorMsg("Location permission is required.");
+        setLoading(false);
+      }
+    );
   }, []);
+// WhatsApp Message 
+const generateWhatsAppMessage = (job) => {
+  return `
+Hello ${job.name},
 
-  /* ================= LOADING UI ================= */
+I am interested in your cleaning service.
+Location: ${job.location}
+Work Type: ${job.workType}
+Work Time: ${job.workTime}
+Budget: ₹${job.amount}
+Distance: ${job.distance} KM
+
+Please let me know your availability.
+
+Thank you.
+  `;
+};
+
+  /* ================= LOADING ================= */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+      <div className="min-h-screen flex items-center justify-center text-lg">
+        Loading nearby jobs...
       </div>
     );
   }
 
-  /* ================= ERROR UI ================= */
+  /* ================= ERROR ================= */
   if (errorMsg) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-center p-6">
-        <div>
-          <p className="text-lg text-red-600 font-medium">{errorMsg}</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center text-red-600 text-lg">
+        {errorMsg}
       </div>
     );
   }
 
-  /* ================= MAIN UI ================= */
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6">Nearest Cleaners</h2>
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-3xl font-bold mb-8 text-center">
+          Nearby Cleaning Jobs
+        </h2>
 
-        <div className="grid gap-4">
-          {cleaners.map((cleaner) => (
+        <div className="grid md:grid-cols-2 gap-6">
+          {jobs.map((job) => (
             <div
-              key={cleaner._id}
-              className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition"
+              key={job._id}
+              className="bg-white p-6 rounded-2xl shadow hover:shadow-lg transition"
             >
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold text-lg">
-                  {cleaner.userId?.name || "Cleaner"}
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-semibold">
+                  {job.workType} Cleaning
                 </h3>
-
                 <span className="text-blue-600 font-medium">
-                  {cleaner.distance} KM
+                  {job.distance} KM
                 </span>
               </div>
 
-              <p className="text-sm text-gray-600 mt-1">
-                📍 {cleaner.location}
+              <p className="text-gray-600 text-sm mb-2">
+                📍 {job.location}
               </p>
 
-              <p className="text-sm mt-2 font-medium">
-                ₹ {cleaner.pricePerDay} / day
+              <p className="font-medium text-lg mb-3">
+                ₹ {job.amount}
               </p>
 
               <button
-                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 onClick={() => {
                   if (!user?.profileCompleted) {
-                    alert("⚠ Please complete your profile to view details.");
+                    alert("Please complete your profile first.");
                   } else {
-                    alert("Show full cleaner details page here.");
+                    setSelectedJob(job);
                   }
                 }}
+                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
               >
                 View Details
               </button>
@@ -166,6 +151,63 @@ const FindCearners = () => {
           ))}
         </div>
       </div>
+
+      {/* ================= MODAL ================= */}
+      {selectedJob && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl p-8 relative max-h-[90vh] overflow-y-auto">
+
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedJob(null)}
+              className="absolute top-4 right-4 text-2xl text-gray-500 hover:text-black"
+            >
+              ✕
+            </button>
+
+            <h3 className="text-2xl font-bold mb-6 text-center">
+              Job Details
+            </h3>
+
+            <div className="space-y-3 text-sm">
+              <p><b>Name:</b> {selectedJob.name}</p>
+              <p><b>Age:</b> {selectedJob.age}</p>
+              <p><b>Phone:</b> {selectedJob.phone}</p>
+              <p><b>Work Type:</b> {selectedJob.workType}</p>
+              <p><b>Work Time:</b> {selectedJob.workTime}</p>
+              <p><b>Experience:</b> {selectedJob.experience}</p>
+              <p><b>Payment Mode:</b> {selectedJob.paymentMode}</p>
+              <p><b>Amount:</b> ₹{selectedJob.amount}</p>
+              <p><b>Location:</b> {selectedJob.location}</p>
+              <p><b>Description:</b> {selectedJob.description}</p>
+              <p><b>Distance:</b> {selectedJob.distance} KM</p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-8 grid grid-cols-2 gap-4">
+<a
+  href={`https://wa.me/${selectedJob.phone?.replace(/\D/g, "")}?text=${encodeURIComponent(
+    generateWhatsAppMessage(selectedJob)
+  )}`}
+  target="_blank"
+  rel="noreferrer"
+  className="bg-green-600 text-white py-3 rounded-lg text-center hover:bg-green-700 transition"
+>
+  💬 Message Cleaner
+</a>
+
+
+              <a
+                href={`tel:${selectedJob.phone}`}
+                className="bg-blue-600 text-white py-3 rounded-lg text-center hover:bg-blue-700 transition"
+              >
+                📞 Call Cleaner
+              </a>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -6,54 +6,62 @@ const FinderDashboard = () => {
 
   const [location, setLocation] = useState("");
   const [loadingLocation, setLoadingLocation] = useState(true);
+// localStorage.setItem("finderCoords", JSON.stringify({ latitude, longitude }));
 
-  useEffect(() => {
+useEffect(() => {
+  const savedLocation = localStorage.getItem("finderLocation");
 
-    // Backend test
-    api.get("/")
-      .then(res => console.log(res.data))
-      .catch(err => console.error(err));
-
-    // Fetch Location
-    if (!navigator.geolocation) {
-      setLocation("Location not supported");
-      setLoadingLocation(false);
-      return;
-    }
-
- navigator.geolocation.getCurrentPosition(
-  async (position) => {
-    try {
-      const { latitude, longitude } = position.coords;
-
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-      );
-
-      const data = await res.json();
-
-      // FULL EXACT ADDRESS
-      setLocation(data.display_name);
-
-    } catch (error) {
-      setLocation("Unable to fetch location");
-    } finally {
-      setLoadingLocation(false);
-    }
-  },
-  () => {
-    setLocation("Location permission denied");
+  // ✅ If already saved, use it
+  if (savedLocation) {
+    setLocation(savedLocation);
     setLoadingLocation(false);
-  },
-  {
-    enableHighAccuracy: true,  // 🔥 more accurate
-    timeout: 10000,
-    maximumAge: 0
+    return;
   }
-);
 
+  // ❌ If not saved, fetch new location
+  if (!navigator.geolocation) {
+    setLocation("Location not supported");
+    setLoadingLocation(false);
+    return;
+  }
 
-  }, []);
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      try {
+        const { latitude, longitude } = position.coords;
+
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+        );
+
+        const data = await res.json();
+
+        const fullAddress = data.display_name;
+
+        // ✅ Save in state
+        setLocation(fullAddress);
+
+        // ✅ Save in localStorage
+        localStorage.setItem("finderLocation", fullAddress);
+
+      } catch (error) {
+        setLocation("Unable to fetch location");
+      } finally {
+        setLoadingLocation(false);
+      }
+    },
+    () => {
+      setLocation("Location permission denied");
+      setLoadingLocation(false);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
+}, []);
+
 
   const cards = [
     {
@@ -88,7 +96,17 @@ const FinderDashboard = () => {
 
         {/* Location Card */}
         <div className="bg-white rounded-2xl p-5 shadow hover:shadow-lg transition">
-          <p className="text-sm text-gray-500">Location</p>
+          <p className="text-sm text-gray-500 ">Location           <button
+  onClick={() => {
+    localStorage.removeItem("finderLocation");
+    window.location.reload();
+  }}
+  className="text-xs pl-70 text-blue-500 mt-2"
+>
+  Refresh Location
+</button></p>
+ 
+
 
           {loadingLocation ? (
             <div className="flex items-center gap-2 mt-2">
