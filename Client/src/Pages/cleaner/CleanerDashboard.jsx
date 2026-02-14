@@ -16,23 +16,31 @@ const CleanerDashboard = () => {
 
   if (loading || !profile) return null;
 
-  const toggleStatus = async () => {
-    const res = await updateAvailability(!profile.availability);
-    setProfile({ ...profile, availability: res.data.availability });
-  };
+const toggleStatus = async () => {
+  try {
+    const res = await updateAvailability();
+
+    setProfile(prev => ({
+      ...prev,
+      status: res.data.status
+    }));
+
+  } catch (err) {
+    console.error("Status update failed:", err.response?.data || err);
+  }
+};
+
+
+
 
   const cards = [
     {
       title: "Request Job",
       path: "/cleaner/requestjob",
-      disabled: !profile.availability,
+      disabled: profile.status !== "on",
       color: "from-blue-500 to-indigo-500",
     },
-    // {
-    //   title: "Available Jobs",
-    //   // path: "/cleaner/availablejobs",
-    //   color: "from-green-500 to-emerald-500",
-    // },
+   
     {
       title: "My Jobs",
       path: "/cleaner/myjobs",
@@ -51,29 +59,37 @@ const CleanerDashboard = () => {
       <h2 className="text-3xl font-bold mb-6">Cleaner Dashboard</h2>
 
       {/* STATUS CARD */}
-      <div className="bg-white rounded-xl p-5 shadow flex items-center justify-between mb-8">
-        <div>
-          <p className="text-sm text-gray-500">Current Status</p>
-          <p
-            className={`text-xl font-semibold ${
-              profile.availability ? "text-green-600" : "text-red-500"
-            }`}
-          >
-            {profile.availability ? "Available" : "Not Available"}
-          </p>
-        </div>
+    <div className="bg-white rounded-xl p-5 shadow flex items-center justify-between mb-8">
+  <div>
+    <p className="text-sm text-gray-500">Current Status</p>
 
-        <button
-          onClick={toggleStatus}
-          className={`px-6 py-2 rounded-full text-white font-medium transition ${
-            profile.availability
-              ? "bg-red-500 hover:bg-red-600"
-              : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
-          {profile.availability ? "Go Offline" : "Go Online"}
-        </button>
-      </div>
+    <p
+      className={`text-xl font-semibold ${
+        profile.status === "on"
+          ? "text-green-600"
+          : "text-red-500"
+      }`}
+    >
+      {profile.status === "on"
+        ? "Available"
+        : "Not Available"}
+    </p>
+  </div>
+
+  <button
+    onClick={toggleStatus}
+    className={`px-6 py-2 rounded-full text-white font-medium transition ${
+      profile.status === "on"
+        ? "bg-red-500 hover:bg-red-600"
+        : "bg-green-600 hover:bg-green-700"
+    }`}
+  >
+    {profile.status === "on"
+      ? "Go Offline"
+      : "Go Online"}
+  </button>
+</div>
+
 
       {/* NAVIGATION CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -97,7 +113,7 @@ const CleanerDashboard = () => {
               <h3 className="text-xl font-semibold">{card.title}</h3>
               <p className="text-sm opacity-90 mt-1">Open</p>
             </Link>
-          )
+          ),
         )}
       </div>
     </div>

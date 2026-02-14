@@ -27,14 +27,16 @@ const FinderProfile = () => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-   const res = await completeProfile(profile);
-setProfile(res.data.profile);
+  try {
+    const res = await completeProfile(profile);
 
+    // ✅ Update local profile state
+    setProfile(res.data.profile);
 
-    // ✅ update global auth + localStorage
+    // ✅ Update global auth state
     updateUser({
       ...user,
       profileCompleted: true,
@@ -43,7 +45,53 @@ setProfile(res.data.profile);
     setShowForm(false);
 
     alert("✅ Profile completed successfully. You can now use all services.");
-  };
+
+  } catch (err) {
+    console.error("PROFILE SUBMIT ERROR:", err.response);
+
+    alert(
+      err.response?.data?.msg || "Something went wrong. Please try again."
+    );
+  }
+};
+
+// location fetch: 
+const fetchLocation = () => {
+  if (!navigator.geolocation) {
+    alert("Geolocation not supported");
+    return;
+  }
+
+  setLoadingLocation(true);
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords;
+
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+        );
+
+        const data = await res.json();
+
+        setProfile((prev) => ({
+          ...prev,
+          location: data.display_name,
+        }));
+
+      } catch (err) {
+        alert("Failed to fetch address");
+      } finally {
+        setLoadingLocation(false);
+      }
+    },
+    () => {
+      alert("Location permission denied");
+      setLoadingLocation(false);
+    }
+  );
+};
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -104,14 +152,29 @@ setProfile(res.data.profile);
               required
             />
 
-            <input
-              name="location"
-              placeholder="Location"
-              value={profile.location || ""}
-              onChange={handleChange}
-              className="input"
-              required
-            />
+            <div className="space-y-2">
+  <input
+    name="location"
+    placeholder="Location"
+    value={profile.location || ""}
+    onChange={handleChange}
+    className="input"
+    required
+  />
+
+  <button
+    type="button"
+    onClick={fetchLocation}
+    className="flex items-center gap-2 text-blue-600 text-sm"
+  >
+    {loadingLocation ? (
+      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    ) : (
+      "📍 Use My Location"
+    )}
+  </button>
+</div>
+
 
             <select
               name="placeType"

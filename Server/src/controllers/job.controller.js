@@ -9,6 +9,8 @@ export const createJob = async (req, res) => {
       phone,
       workType,
       location,
+      latitude,
+      longitude,
       workTime,
       experience,
       paymentMode,
@@ -17,11 +19,16 @@ export const createJob = async (req, res) => {
     } = req.body;
 
     /* ================= REQUIRED FIELD VALIDATION ================= */
-    if (!name || !age || !phone  || !location|| !workType || !workTime || !paymentMode || !amount) {
-      return res.status(400).json({
-        msg: "All required fields must be filled",
-      });
-    }
+if (
+  !name || !age || !phone || !location ||
+  !latitude || !longitude ||
+  !workType || !workTime || !paymentMode || !amount
+) {
+  return res.status(400).json({
+    msg: "All required fields must be filled",
+  });
+}
+
 
     /* ================= CLEANER PROFILE FETCH ================= */
     const cleanerProfile = await CleanerProfile.findOne({
@@ -41,29 +48,44 @@ export const createJob = async (req, res) => {
     }
 
     /* ================= AVAILABILITY CHECK ================= */
-if (!cleanerProfile.availability) {
+  if (cleanerProfile.status !== "on") {
   return res.status(400).json({
-    msg: "You are currently not available",
+    msg: "You are currently offline",
   });
 }
 
 
 
     /* ================= CREATE JOB ================= */
-    const job = await Job.create({
-      cleanerId: req.user.id,
-      name,
-      age: Number(age),
-      phone,
-      workType,
-      location,
-      workTime,
-      experience: experience ? Number(experience) : 0,
-      paymentMode,
-      amount: Number(amount),
-      description,
-      availability: "pending",
-    });
+   if (!cleanerProfile) {
+  return res.status(400).json({
+    msg: "Complete your profile first",
+  });
+}
+
+if (cleanerProfile.status !== "on") {
+  return res.status(400).json({
+    msg: "You are currently offline",
+  });
+}
+
+const job = await Job.create({
+  cleanerId: req.user.id,
+  name,
+  age: Number(age),
+  phone,
+  workType,
+  location,
+  latitude,
+  longitude,
+  workTime,
+  experience: experience || "",
+  paymentMode,
+  amount: Number(amount),
+  description,
+  availability: "pending",
+});
+
 
     res.status(201).json({
       msg: "Job created successfully",
@@ -77,7 +99,7 @@ if (!cleanerProfile.availability) {
     });
   }
 };
- /* ================= MY JOB ================= */
+/* ================= MY JOB ================= */
 export const getMyJobs = async (req, res) => {
   try {
     if (!req.user) {
@@ -98,35 +120,46 @@ export const getMyJobs = async (req, res) => {
 
 
 // update 
-  export const updateJob = async (req, res) => {
-    try {
-      console.log("UPDATE ROUTE HIT");
+export const updateJob = async (req, res) => {
+  try {
+    console.log("UPDATE ROUTE HIT");
 
-      const job = await Job.findOneAndUpdate(
-        {
-          _id: req.params.id,
-          cleanerId: req.user.id
-        },
-        {
-          ...req.body
-        },
-        { new: true }
-      );
+    // const job = await Job.findOneAndUpdate(
+    //   {
+    //     _id: req.params.id,
+    //     cleanerId: req.user.id
+    //   },
+    //   {
+    //     ...req.body
+    //   },
+    //   { new: true }
+    //   // { returnDocument: "after" }
 
-      if (!job) {
-        return res.status(404).json({ msg: "Job not found" });
-      }
+    // );
 
-      res.json(job);
+    const job = await Job.findOneAndUpdate(
+  {
+    _id: req.params.id,
+    cleanerId: req.user.id
+  },
+  req.body,
+  { returnDocument: "after" }
+);
 
-    } catch (error) {
-      console.error("UPDATE ERROR:", error);
-      res.status(500).json({ msg: "Failed to update job" });
+    if (!job) {
+      return res.status(404).json({ msg: "Job not found" });
     }
-  };
 
-  // delete 
-  export const deleteJob = async (req, res) => {
+    res.json(job);
+
+  } catch (error) {
+    console.error("UPDATE ERROR:", error);
+    res.status(500).json({ msg: "Failed to update job" });
+  }
+};
+
+// delete 
+export const deleteJob = async (req, res) => {
   try {
     console.log("DELETE ROUTE HIT");
 

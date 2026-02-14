@@ -22,39 +22,85 @@ export const completeProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const {
-      phone,
-      location,
-      jobTypes,
-      pricePerDay,
-      name,
-    } = req.body;
+    const user = await User.findById(userId);
 
-    // 🔒 Only allow specific fields
-    const profile = await CleanerProfile.findOneAndUpdate(
-      { userId },
-      {
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    /* ================= CLEANER PROFILE ================= */
+    if (user.role === "cleaner") {
+      const {
         phone,
         location,
+        latitude,
+        longitude,
         jobTypes,
-        pricePerDay: Number(pricePerDay),
-      },
-      { new: true, upsert: true }
-    );
+        pricePerDay,
+        name,
+      } = req.body;
 
-    // 🔒 Only allow name update (NOT email, NOT role)
-const updateData = {
-  profileCompleted: true,
-};
+      if (!phone || !location || !latitude || !longitude || !pricePerDay) {
+        return res.status(400).json({
+          msg: "All required fields must be filled",
+        });
+      }
 
-if (name && name.trim() !== "") {
-  updateData.name = name;
-}
+      const profile = await CleanerProfile.findOneAndUpdate(
+        { userId },
+        {
+          phone,
+          location,
+          latitude,
+          longitude,
+          jobTypes,
+          pricePerDay: Number(pricePerDay),
+        },
+        {
+          upsert: true,
+          returnDocument: "after",
+        }
+      );
 
-await User.findByIdAndUpdate(userId, updateData);
+      await User.findByIdAndUpdate(userId, {
+        profileCompleted: true,
+        ...(name && { name }),
+      });
 
+      return res.json({ success: true, profile });
+    }
 
-    res.json({ success: true, profile });
+    /* ================= FINDER PROFILE ================= */
+    if (user.role === "finder") {
+      const { phone, location, latitude, longitude, placeType } = req.body;
+
+      if (!phone || !location || !placeType) {
+        return res.status(400).json({
+          msg: "All required fields must be filled",
+        });
+      }
+
+      const profile = await FinderProfile.findOneAndUpdate(
+        { userId },
+        {
+          phone,
+          location,
+          latitude,
+          longitude,
+          placeType,
+        },
+        {
+          upsert: true,
+          returnDocument: "after",
+        }
+      );
+
+      await User.findByIdAndUpdate(userId, {
+        profileCompleted: true,
+      });
+
+      return res.json({ success: true, profile });
+    }
 
   } catch (err) {
     console.error(err);
@@ -63,14 +109,49 @@ await User.findByIdAndUpdate(userId, updateData);
 };
 
 
+
+// status ceheck 
 export const toggleAvailability = async (req, res) => {
-  const { availability } = req.body;
+  try {
+    const profile = await CleanerProfile.findOne({
+      userId: req.user.id,
+    });
 
-  const profile = await CleanerProfile.findOneAndUpdate(
-    { userId: req.user.id },
-    { availability },
-    { new: true}
-  );
+    if (!profile) {
+      return res.status(404).json({ msg: "Profile not found" });
+    }
 
-  res.json({ availability: profile.availability });
+    const newStatus =
+      profile.status === "on" ? "off" : "on";
+
+    await CleanerProfile.updateOne(
+      { userId: req.user.id },
+      { status: newStatus }
+    );
+
+    res.json({ status: newStatus });
+
+  } catch (error) {
+    console.error("TOGGLE STATUS ERROR:", error);
+    res.status(500).json({ msg: "Failed to update status" });
+  }
 };
+
+
+
+
+
+
+// 
+export const getAvailableCleaners = async (req, res) => {
+  try {
+    const cleaners = await CleanerProfile.find({
+      status: "on"
+    }).populate("userId", "name");
+
+    res.json(cleaners);
+  } catch (error) {
+    res.status(500).json({ msg: "Failed to fetch cleaners" });
+  }
+};
+

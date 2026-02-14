@@ -45,7 +45,7 @@ useEffect(() => {
     }
   };
 
-  const fetchLocation = () => {
+const fetchLocation = () => {
   if (!navigator.geolocation) {
     alert("Geolocation not supported");
     return;
@@ -55,7 +55,6 @@ useEffect(() => {
     async (position) => {
       const { latitude, longitude } = position.coords;
 
-      // Convert lat/lng to readable address
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
       );
@@ -64,14 +63,22 @@ useEffect(() => {
 
       setForm((prev) => ({
         ...prev,
-        location: data.display_name,
+        location: data.display_name,  // readable address
+        latitude,                     // 👈 SAVE THIS
+        longitude                     // 👈 SAVE THIS
       }));
     },
     () => {
       alert("Unable to fetch location");
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
     }
   );
 };
+
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
